@@ -35,9 +35,26 @@ class _PostsListState extends State<PostsList> {
                     ? const BottomLoader()
                     : PostListItem(post: state.posts[index]);
               },
-              itemCount: state.hasReachedMax
-                  ? state.posts.length
-                  : state.posts.length + 1,
+              itemCount:
+                  state.hasReachedMax
+                      ? state.posts.length
+                      : state.posts.length + 1,
+              controller: _scrollController,
+            );
+          case PostStatus.fetching:
+            if (state.posts.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            return ListView.builder(
+              itemBuilder: (BuildContext context, int index) {
+                return index >= state.posts.length
+                    ? const BottomLoader()
+                    : PostListItem(post: state.posts[index]);
+              },
+              itemCount:
+                  state.hasReachedMax
+                      ? state.posts.length
+                      : state.posts.length + 1,
               controller: _scrollController,
             );
           case PostStatus.initial:

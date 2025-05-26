@@ -22,8 +22,8 @@ EventTransformer<E> throttleDroppable<E>(Duration duration) {
 
 class PostBloc extends Bloc<PostEvent, PostState> {
   PostBloc({required http.Client httpClient})
-      : _httpClient = httpClient,
-        super(const PostState()) {
+    : _httpClient = httpClient,
+      super(const PostState()) {
     on<PostFetched>(
       _onFetched,
       transformer: throttleDroppable(throttleDuration),
@@ -31,12 +31,13 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   }
 
   final http.Client _httpClient;
-
-  Future<void> _onFetched(
-    PostFetched event,
-    Emitter<PostState> emit,
-  ) async {
+  Future<void> _onFetched(PostFetched event, Emitter<PostState> emit) async {
     if (state.hasReachedMax) return;
+
+    // Emit fetching state before making the API call
+    if (state.status != PostStatus.fetching) {
+      emit(state.copyWith(status: PostStatus.fetching));
+    }
 
     try {
       final posts = await _fetchPosts(startIndex: state.posts.length);
@@ -58,11 +59,10 @@ class PostBloc extends Bloc<PostEvent, PostState> {
 
   Future<List<Post>> _fetchPosts({required int startIndex}) async {
     final response = await _httpClient.get(
-      Uri.https(
-        'jsonplaceholder.typicode.com',
-        '/posts',
-        <String, String>{'_start': '$startIndex', '_limit': '$_postLimit'},
-      ),
+      Uri.https('jsonplaceholder.typicode.com', '/posts', <String, String>{
+        '_start': '$startIndex',
+        '_limit': '$_postLimit',
+      }),
     );
     if (response.statusCode == 200) {
       final body = json.decode(response.body) as List;
